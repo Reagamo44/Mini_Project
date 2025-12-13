@@ -22,8 +22,11 @@ def tilt_phase(X, Y, mask, a):
         Phase disturbance due to tilt
     """
 
+    # calculate tilt phase disturbance
     phi_true = a * X
-    phase = np.where(mask, phi_true, 0.0)
+
+    # apply mask to phase disturbance
+    phase = np.where(mask, phi_true, np.nan)
 
     return phase
 

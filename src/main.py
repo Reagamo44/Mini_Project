@@ -10,10 +10,14 @@ X, Y, dx, dy, mask = make_grid(N=128)
 
 phase = tilt_phase(X, Y, mask, a=5.0)
 
-grid = pv.StructuredGrid(X, Y, np.zeros_like(X))
-grid.point_data['phase'] = phase.ravel()
 
-plotter = pv.Plotter()
-plotter.add_mesh(grid, scalars='phase')
-plotter.view_xy()
-plotter.show(screenshot = "tilt_phase.png")
+# finite central difference of change in phase
+sx = (phase[2:, 1:-1] - phase[:-2, 1:-1]) / (2 * dx)
+sy = (phase[1:-1, 2:] - phase[1:-1, :-2]) / (2 * dy)
+
+h = np.nanmean(sx)
+i = np.nanmean(sy)
+j = np.nanstd(sx)
+k = np.nanstd(sy)
+
+print(h, i, j, k)
