@@ -1,7 +1,7 @@
 
 # import necessary modules
 from grid import make_grid
-from phase import tilt_phase, defocus_phase
+from phase import tilt_phase, defocus_phase, astigmatism_phase
 
 import numpy as np
 import pyvista as pv
@@ -9,9 +9,9 @@ import pyvista as pv
 # initialized grid
 X, Y, dx, dy, mask = make_grid(N=128)
 
-phase = defocus_phase(X, Y, mask, b=5.0)
 # phase = tilt_phase(X, Y, mask, a=5.0)
-
+# phase = defocus_phase(X, Y, mask, b=5.0)
+phase = astigmatism_phase(X, Y, mask, c=5.0, theta=45)
 
 # finite central difference of change in phase
 # d(phase)/dx  → axis 1
@@ -48,10 +48,10 @@ grid.point_data["sy"] = sy_full.ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="sx", nan_opacity=0.0)
 plotter.view_xy()
-plotter.show(screenshot = "defocus_slope_x.png")
+plotter.show(screenshot = "astigmatism_45deg_slope_y.png")
 
 grid.point_data["phase"] = phase.ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="phase", nan_opacity=0.0)
 plotter.view_xy()
-plotter.show(screenshot = "defocus_phase.png")
+plotter.show(screenshot = "astigmatism_45deg_phase.png")

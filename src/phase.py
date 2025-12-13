@@ -56,4 +56,32 @@ def defocus_phase(X, Y, mask, b):
     phase = np.where(mask, phi_true, np.nan)
 
     return phase
-# def random_phase
+
+def astigmatism_phase(X, Y, mask, c, theta=0):
+    """
+    Create an astigmatism phase disturbance over the grid defined by X and Y with amplitude c
+
+    Parameters:
+    X : 2D array
+        X coordinates of the grid
+    Y : 2D array
+        Y coordinates of the grid
+    mask : 2D boolean array
+        Mask defining the aperture
+    c : float
+        Amplitude of the astigmatism disturbance
+
+    Returns:
+    phase : 2D array
+        Phase disturbance due to astigmatism
+    """
+
+    theta = np.deg2rad(theta) # want input theta in degrees
+
+    # calculate astigmatism phase disturbance
+    phi_true = c * ((X**2 - Y**2) * np.cos(2*theta) + 2*X*Y * np.sin(2*theta))
+
+    # apply mask to phase disturbance
+    phase = np.where(mask, phi_true, np.nan)
+
+    return phase
