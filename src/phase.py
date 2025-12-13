@@ -30,5 +30,30 @@ def tilt_phase(X, Y, mask, a):
 
     return phase
 
+def defocus_phase(X, Y, mask, b):
+    """
+    Create a defocus phase disturbance over the grid defined by X and Y with amplitude a
 
+    Parameters:
+    X : 2D array
+        X coordinates of the grid
+    Y : 2D array
+        Y coordinates of the grid
+    mask : 2D boolean array
+        Mask defining the aperture
+    a : float
+        Amplitude of the defocus disturbance
+
+    Returns:
+    phase : 2D array
+        Phase disturbance due to defocus
+    """
+
+    # calculate defocus phase disturbance
+    phi_true = b * (X**2 + Y**2)
+
+    # apply mask to phase disturbance
+    phase = np.where(mask, phi_true, np.nan)
+
+    return phase
 # def random_phase
