@@ -12,12 +12,38 @@ phase = tilt_phase(X, Y, mask, a=5.0)
 
 
 # finite central difference of change in phase
-sx = (phase[2:, 1:-1] - phase[:-2, 1:-1]) / (2 * dx)
-sy = (phase[1:-1, 2:] - phase[1:-1, :-2]) / (2 * dy)
+# d(phase)/dx  → axis 1
+sx = (phase[1:-1, 2:] - phase[1:-1, :-2]) / (2 * dx)
+
+# d(phase)/dy  → axis 0
+sy = (phase[2:, 1:-1] - phase[:-2, 1:-1]) / (2 * dy)
 
 h = np.nanmean(sx)
 i = np.nanmean(sy)
 j = np.nanstd(sx)
 k = np.nanstd(sy)
 
-print(h, i, j, k)
+sx_full = np.full_like(X, np.nan, dtype=float)
+sy_full = np.full_like(X, np.nan, dtype=float)
+
+
+sx_full[1:-1, 1:-1] = sx
+sy_full[1:-1, 1:-1] = sy
+
+print(f"sx mean: {np.nanmean(sx_full)}, sx std: {np.nanstd(sx_full)}")
+print(f"sx min: {np.nanmin(sx_full)}, sx max: {np.nanmax(sx_full)}")
+
+# mask outside pupil
+sx_full[~mask] = np.nan
+sy_full[~mask] = np.nan
+
+# build grid + attach data
+grid = pv.StructuredGrid(X, Y, np.zeros_like(X))
+grid.point_data["sx"] = sx_full.ravel(order="C")
+grid.point_data["sy"] = sy_full.ravel(order="C")
+
+# plot (choose "sx" or "sy")
+plotter = pv.Plotter()
+plotter.add_mesh(grid, scalars="sy", nan_opacity=0.0)  # <-- "sx" or "sy"
+plotter.view_xy()
+plotter.show(screenshot = "tilt_slope_y.png")
