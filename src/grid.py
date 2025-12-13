@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def make_grid(N, min_max_value):
+def make_grid(N = 130, min_max_value = 1.0):
     """
     Create a square grid over [-min_max_value, min_max_value] x [-min_max_value, min_max_value] and circular pupil mask
 
