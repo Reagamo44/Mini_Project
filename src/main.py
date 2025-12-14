@@ -2,6 +2,7 @@
 # import necessary modules
 from grid import make_grid
 from phase import tilt_phase, defocus_phase, astigmatism_phase
+from phase_reconstruct import poisson_reconstruction
 
 import numpy as np
 import pyvista as pv
@@ -11,7 +12,7 @@ X, Y, dx, dy, mask = make_grid(N=128)
 
 # phase = tilt_phase(X, Y, mask, a=5.0)
 # phase = defocus_phase(X, Y, mask, b=5.0)
-phase = astigmatism_phase(X, Y, mask, c=5.0, theta=45)
+phase = astigmatism_phase(X, Y, mask, c=5.0, theta=90)
 
 # finite central difference of change in phase
 # d(phase)/dx  → axis 1
@@ -44,14 +45,25 @@ grid = pv.StructuredGrid(X, Y, np.zeros_like(X))
 grid.point_data["sx"] = sx_full.ravel(order="C")
 grid.point_data["sy"] = sy_full.ravel(order="C")
 
-# plot (choose "sx" or "sy")
-plotter = pv.Plotter()
-plotter.add_mesh(grid, scalars="sx", nan_opacity=0.0)
-plotter.view_xy()
-plotter.show(screenshot = "astigmatism_45deg_slope_y.png")
 
 grid.point_data["phase"] = phase.ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="phase", nan_opacity=0.0)
 plotter.view_xy()
-plotter.show(screenshot = "astigmatism_45deg_phase.png")
+plotter.show()
+
+phase_rec = poisson_reconstruction(sx_full, sy_full, dx, dy, mask)
+scaler = phase/phase_rec
+phase_rec *= scaler
+
+grid.point_data["phase_rec"] = phase_rec.ravel(order="C")
+plotter = pv.Plotter()
+plotter.add_mesh(grid, scalars="phase_rec", nan_opacity=0.0)
+plotter.view_xy()
+plotter.show()
+
+grid.point_data["phase_error"] = (phase - phase_rec).ravel(order="C")
+plotter = pv.Plotter()
+plotter.add_mesh(grid, scalars="phase_error", nan_opacity=0.0)
+plotter.view_xy()
+plotter.show()
