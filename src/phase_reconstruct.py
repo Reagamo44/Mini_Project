@@ -20,17 +20,14 @@ def poisson_reconstruction(sx_full, sy_full, dx, dy, mask):
         Reconstructed phase
     """
 
-    # interior = mask.copy() # pupil area
+    solve_mask = mask.copy() # pupil area
 
     # prevent indexing error at edges
-    #interior[0, :] = interior[-1, :] = False 
-    # interior[:, 0] = interior[:, -1] = False
+    solve_mask[0, :] = solve_mask[-1, :] = False
+    solve_mask[:, 0] = solve_mask[:, -1] = False
 
-
-    interior = mask.copy() # pupil area
-
-    # interior is surrounding four points are in the mask (separates boundaries)
-    interior &= mask & np.roll(mask, 1, axis=0) & np.roll(mask, -1, axis=0) & np.roll(mask, 1, axis=1) & np.roll(mask, -1, axis=1)
+    pts = np.argwhere(solve_mask)
+    n = len(pts)
 
     # sets NaN to zero for prevent errors
     sx = np.nan_to_num(sx_full, nan=0.0)
@@ -46,43 +43,68 @@ def poisson_reconstruction(sx_full, sy_full, dx, dy, mask):
 
     # sets all boundary values outside of pupil to -1 (mostly for later checks and distinguishing boundaries of pupil)
     idx = -np.ones(mask.shape, dtype=int)
-    pts = np.argwhere(interior)
 
     # assign indices to interior points, indexing from class does not work because looking at circular pupil
     for k, (i, j) in enumerate(pts):
         idx[i, j] = k
 
     # building Ax = b system
-    n = len(pts)
     A = sps.lil_matrix((n, n)) # sparse matrix for efficiency (regular matrix too large and mostly zeros)
     b = np.zeros(n) # still unknown
 
     # condense constants for readability
     Cy = 1/(dy**2)
     Cx = 1/(dx**2) 
-    C0 = -2*(Cx + Cy)
 
 
     # defining A matrix and b vector
     for row, (i, j) in enumerate(pts):
-        A[row, row] = C0
+        # start with standard diagonal value
+        C0 = -2*(Cx + Cy)
 
-        A[row, idx[i + 1, j]] = Cx
-        A[row, idx[i - 1, j]] = Cx
-        A[row, idx[i, j + 1]] = Cy
-        A[row, idx[i, j - 1]] = Cy
+        # if neighbor is in pupil, add to matrix, else add to diagonal
+        if solve_mask[i + 1, j]:
+            A[row, idx[i + 1, j]] = Cx
+        else:
+            # Neumann boundary condition, adding weight to diagonal (clean assymilation to tilts and warps at edge)
+            C0 += Cx
 
+        if solve_mask[i - 1, j]:
+            A[row, idx[i - 1, j]] = Cx
+        else:
+            C0 += Cx
+
+        if solve_mask[i, j + 1]:
+            A[row, idx[i, j + 1]] = Cy
+        else:
+            C0 += Cy
+
+        if solve_mask[i, j - 1]:
+            A[row, idx[i, j - 1]] = Cy
+        else:
+            C0 += Cy
+        
+        # add diagonal entry
+        A[row, row] += C0
+
+        # right hand side entry
         b[row] = rhs[i, j]
 
-        
+    # fix reference point to zero phase (to prevent singularity and make solution unique)
+    A[0,:] = 0
+    A[0,0] = 1
+    b[0]=0
 
+    # solve sparse linear system
     phi_vec = sps.linalg.spsolve(A.tocsr(), b)
 
+    # map solution back to 2D grid
     phase = np.full_like(sx_full, np.nan, dtype=float)
-    phase[interior] = phi_vec
+    phase[solve_mask] = phi_vec
 
-    phase[interior] -= np.nanmean(phase[interior])
-    
+    # remove global mean over pupil to fix arbitrary offset
+    phase[solve_mask] -= np.nanmean(phase[solve_mask])
+
     return phase
 
 

@@ -33,6 +33,7 @@ sx_full = np.full_like(X, np.nan, dtype=float)
 sy_full = np.full_like(X, np.nan, dtype=float)
 
 
+
 sx_full[1:-1, 1:-1] = sx
 sy_full[1:-1, 1:-1] = sy
 
@@ -56,14 +57,18 @@ phase_rec = poisson_reconstruction(sx_full, sy_full, dx, dy, mask)
 scaler = phase/phase_rec
 phase_rec *= scaler
 
+
+corr = np.dot(phase[mask], phase_rec[mask]) / np.linalg.norm(phase[mask])*np.linalg.norm(phase_rec[mask])
+print(f"Reconstruction correlation: {corr}")
+
 grid.point_data["phase_rec"] = phase_rec.ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="phase_rec", nan_opacity=0.0)
 plotter.view_xy()
-plotter.show()
+plotter.show(screenshot="phase_rec_Poisson_Neumann.png")
 
 grid.point_data["phase_error"] = (phase - phase_rec).ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="phase_error", nan_opacity=0.0)
 plotter.view_xy()
-plotter.show()
+plotter.show(screenshot="phase_error_Poisson_Neumann.png")
