@@ -5,7 +5,8 @@ import scipy.sparse as sps
 
 def poisson_reconstruction(sx_full, sy_full, dx, dy, mask):
     """
-    Reconstruct phase from slope measurements using Poisson equation approach
+    Reconstruct phase from slope measurements using Poisson equation approach.
+    Neumann Boundary conditions were applied to better approximate the behavior at the pupil edge.
 
     Parameters:
     sx : 2D array
@@ -34,12 +35,12 @@ def poisson_reconstruction(sx_full, sy_full, dx, dy, mask):
     sy = np.nan_to_num(sy_full, nan=0.0)
 
     # central differencing
-    ds_dx = (sx[2:, 1:-1] - sx[:-2, 1:-1]) / (2 * dx)
-    ds_dy = (sy[1:-1, 2:] - sy[1:-1, :-2]) / (2 * dy)
+    dsy_dy = (sy[2:, 1:-1] - sy[:-2, 1:-1]) / (2 * dy)
+    dsx_dx = (sx[1:-1, 2:] - sx[1:-1, :-2]) / (2 * dy)
 
     # fill array with interior values
     rhs = np.zeros_like(sx)
-    rhs[1:-1, 1:-1] = ds_dx + ds_dy
+    rhs[1:-1, 1:-1] = dsx_dx + dsy_dy
 
     # sets all boundary values outside of pupil to -1 (mostly for later checks and distinguishing boundaries of pupil)
     idx = -np.ones(mask.shape, dtype=int)
