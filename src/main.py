@@ -4,61 +4,23 @@ from grid import make_grid
 from phase import tilt_phase, defocus_phase, astigmatism_phase
 from phase_reconstruct import poisson_reconstruction
 from metrics import rms_error
+from convergence import slopes_from_phase, run_case
 
 import numpy as np
 import pyvista as pv
 
-# initialized grid
-X, Y, dx, dy, mask = make_grid(N=128)
 
-# phase = tilt_phase(X, Y, mask, a=5.0)
-# phase = defocus_phase(X, Y, mask, b=5.0)
-phase = astigmatism_phase(X, Y, mask, c=5.0, theta=90)
+h, rms = run_case(200, 1.0, True, False, False, 1, 0, 0)
 
-# finite central difference of change in phase
-# d(phase)/dx  → axis 1
-sx = (phase[1:-1, 2:] - phase[1:-1, :-2]) / (2 * dx)
-
-# d(phase)/dy  → axis 0
-sy = (phase[2:, 1:-1] - phase[:-2, 1:-1]) / (2 * dy)
-
-# print statistics of slopes, temporary debugging info
-h = np.nanmean(sx)
-i = np.nanmean(sy)
-j = np.nanstd(sx)
-k = np.nanstd(sy)
-
-print(f"sx mean: {h}, sy mean: {i}, sx std: {j}, sy std: {k}")
-
-# expand back to full grid size with nans at edges
-sx_full = np.full_like(X, np.nan, dtype=float)
-sy_full = np.full_like(X, np.nan, dtype=float)
+print(f"h = {h}      rms = {rms}")
 
 
 
-sx_full[1:-1, 1:-1] = sx
-sy_full[1:-1, 1:-1] = sy
 
-# mask outside pupil
-sx_full[~mask] = np.nan
-sy_full[~mask] = np.nan
 
-# reconstruct phase from slopes within mask
-phase_rec = poisson_reconstruction(sx_full, sy_full, dx, dy, mask)
+
 
 '''
-# scale reconstructed phase to true phase amplitude for better visual comparison
-m = mask & np.isfinite(phase_rec) & np.isfinite(phase)
-t = phase[m].ravel()
-r = phase_rec[m].ravel()
-scale_factor = np.dot(t, r) / np.dot(r, r)
-print(f"Scale factor applied to reconstructed phase: {scale_factor}")
-print(dx**2)
-phase_rec *= scale_factor
-'''
-
-print(f"RMS error: {rms_error(phase, phase_rec, mask, remove_tilt=True, rim = 0)}")
-
 # build grid + attach data
 # mostly for plotting purposes
 grid = pv.StructuredGrid(X, Y, np.zeros_like(X))
@@ -67,7 +29,7 @@ grid.point_data["sy"] = sy_full.ravel(order="C")
 
 
 # the grouped plot text is tempoary, this was the easiest way to quickly use and surpress
-'''
+
 grid.point_data["phase"] = phase.ravel(order="C")
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars="phase", nan_opacity=0.0)
