@@ -36,7 +36,7 @@ def poisson_reconstruction(sx_full, sy_full, dx, dy, mask):
 
     # central differencing
     dsy_dy = (sy[2:, 1:-1] - sy[:-2, 1:-1]) / (2 * dy)
-    dsx_dx = (sx[1:-1, 2:] - sx[1:-1, :-2]) / (2 * dy)
+    dsx_dx = (sx[1:-1, 2:] - sx[1:-1, :-2]) / (2 * dx)
 
     # fill array with interior values
     rhs = np.zeros_like(sx)

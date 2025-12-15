@@ -3,6 +3,7 @@
 from grid import make_grid
 from phase import tilt_phase, defocus_phase, astigmatism_phase
 from phase_reconstruct import poisson_reconstruction
+from metrics import rms_error
 
 import numpy as np
 import pyvista as pv
@@ -45,6 +46,7 @@ sy_full[~mask] = np.nan
 # reconstruct phase from slopes within mask
 phase_rec = poisson_reconstruction(sx_full, sy_full, dx, dy, mask)
 
+'''
 # scale reconstructed phase to true phase amplitude for better visual comparison
 m = mask & np.isfinite(phase_rec) & np.isfinite(phase)
 t = phase[m].ravel()
@@ -53,18 +55,9 @@ scale_factor = np.dot(t, r) / np.dot(r, r)
 print(f"Scale factor applied to reconstructed phase: {scale_factor}")
 print(dx**2)
 phase_rec *= scale_factor
+'''
 
-
-
-# calculate RMS error between true and reconstructed phase
-# the true test of performance
-valid_4_rms = mask & np.isfinite(phase_rec) & np.isfinite(phase)
-
-phase0 = phase[valid_4_rms] - np.nanmean(phase[valid_4_rms])
-phase_rec0 = phase_rec[valid_4_rms] - np.nanmean(phase_rec[valid_4_rms])
-
-rms_error = np.sqrt(np.mean((phase0 - phase_rec0)**2))
-print(f"RMS error between true and reconstructed phase: {rms_error}")
+print(f"RMS error: {rms_error(phase, phase_rec, mask, remove_tilt=True, rim = 0)}")
 
 # build grid + attach data
 # mostly for plotting purposes
