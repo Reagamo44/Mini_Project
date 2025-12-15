@@ -52,19 +52,31 @@ for N in Ns:
           " ".join([f"rim{rim}={rmss_by_rim[rim][-1]:.2e}" for rim in rims]))
     
 
-hs = np.array(hs)
+hs = np.array(hs, dtype=float)
+
+k = 3
+kk = min(k, len(hs))
 for rim in rims:
-    rmss_by_rim[rim] = np.array(rmss_by_rim[rim])
-    plt.loglog(hs, rmss_by_rim[rim], '-o', label = f"rim = {rim}")
+    rmss_by_rim[rim] = np.array(rmss_by_rim[rim], dtype=float)
 
-ref = rmss_by_rim[0][-1] * (hs / hs[-1])**2
-plt.loglog(hs, ref, '--', label=r"$O(h^2)$ reference")
+    p = np.polyfit(np.log(hs[-kk:]), np.log(rmss_by_rim[rim][-kk:]), 1)
+    print(f"rim={rim}: observed order ≈ {p[0]:.3f}")
 
+
+base = rmss_by_rim[0]
+
+for rim in rims[1:]:
+    plt.semilogx(hs, rmss_by_rim[rim] / base, '-o', label=f"rim={rim} / rim=0")
+    ratio = rmss_by_rim[rim]/base
+    print(rim, ratio)
+
+
+plt.axhline(1.0, linestyle='--')
 plt.xlabel("h")
-plt.ylabel("RMS error")
+plt.ylabel("RMS ratio")
 plt.grid(True, which="both")
 plt.legend()
-plt.savefig("rms_convergence_rim_sweep.png", dpi=300, bbox_inches="tight")
+plt.savefig("rim_ratios.png", dpi=300, bbox_inches="tight")
 plt.close()
 
 
