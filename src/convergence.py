@@ -19,7 +19,7 @@ def slopes_from_phase(phase, dx, dy):
 
     return sx_full, sy_full
 
-def run_case(N, min_max_value, tilt_case, defoc_case, astig_case, weight_t, weight_defoc, weight_astig):
+def run_case(N, min_max_value, tilt_case, defoc_case, astig_case, weight_t, weight_defoc, weight_astig, rim = 1, remove_tilt = True):
     # initialized grid
     X, Y, dx, dy, mask = make_grid(N, min_max_value)
 
@@ -49,7 +49,7 @@ def run_case(N, min_max_value, tilt_case, defoc_case, astig_case, weight_t, weig
     # reconstruct phase from slopes within mask
     phase_rec = poisson_reconstruction(sx_full, sy_full, dx, dy, mask)
 
-    rms = rms_error(phase, phase_rec, mask, remove_tilt = True, rim = 1)
+    rms = rms_error(phase, phase_rec, mask, remove_tilt , rim = rim)
     h = dx # for specific case of dx = dy!!!
 
     return h, rms
